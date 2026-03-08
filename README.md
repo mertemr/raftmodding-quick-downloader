@@ -34,6 +34,14 @@ This repository contains a Tampermonkey userscript that adds a quick download to
   - `Download Filtered` to bulk download visible mods.
   - `Stop` to halt bulk downloads.
 
+## Screenshots
+
+### Mod Cards
+![Mod Cards](assets/containers.png)
+
+### Quick Tools Panel
+![Quick Tools Panel](assets/quick-tools.png)
+
 ## Notes
 
 - Your browser may ask for permission when downloading multiple files from a single domain. Select `Allow` when prompted.
