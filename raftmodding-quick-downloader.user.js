@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         RaftModding Quick Downloader
 // @namespace    https://raftmodding.com/
-// @version      1.0.0
+// @version      1.1.0
 // @description  Injects quick download buttons, compatibility/type filters, and bulk download on /mods. Debug mode added to limit API requests.
 // @author       mertemr
 // @match        https://www.raftmodding.com/mods*
-// @grant        GM_download
-// @connect      www.raftmodding.com
+// @grant        GM_xmlhttpRequest
+// @connect      *
 // @license      MIT
 // @updateURL    https://raw.githubusercontent.com/mertemr/raftmodding-quick-downloader/main/raftmodding-quick-downloader.user.js
 // @downloadURL  https://raw.githubusercontent.com/mertemr/raftmodding-quick-downloader/main/raftmodding-quick-downloader.user.js
@@ -188,26 +188,39 @@
   }
 
   function downloadByUrl(url, filename) {
+    const name = filename || url.split("/").pop().split("?")[0] || "mod";
     return new Promise((resolve, reject) => {
-      if (typeof GM_download === "function") {
-        const name = filename || url.split("/").pop().split("?")[0] || "mod";
-        GM_download({
+      if (typeof GM_xmlhttpRequest === "function") {
+        GM_xmlhttpRequest({
+          method: "GET",
           url,
-          name,
-          saveAs: false,
-          onload: () => resolve(),
-          onerror: (err) => {
-            console.error("GM_download error:", err, url);
-            reject(new Error(`GM_download failed: ${JSON.stringify(err)}`));
+          responseType: "blob",
+          onload: (resp) => {
+            try {
+              const blobUrl = URL.createObjectURL(resp.response);
+              const a = document.createElement("a");
+              a.href = blobUrl;
+              a.download = name;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+              resolve();
+            } catch (e) {
+              reject(e);
+            }
           },
-          ontimeout: () => reject(new Error("GM_download timed out")),
+          onerror: (err) => {
+            console.error("GM_xmlhttpRequest error:", err, url);
+            reject(new Error(`Download failed: ${JSON.stringify(err)}`));
+          },
+          ontimeout: () => reject(new Error("Download timed out")),
         });
       } else {
         // Fallback: direct anchor click
         const a = document.createElement("a");
         a.href = url;
-        a.download = filename || url.split("/").pop().split("?")[0] || "mod";
-        a.rel = "noopener noreferrer";
+        a.download = name;
         document.body.appendChild(a);
         a.click();
         a.remove();
